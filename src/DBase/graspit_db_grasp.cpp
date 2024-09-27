@@ -165,12 +165,12 @@ void GraspitDBGrasp::setFinalGraspPlanningState(GraspPlanningState *p) {
   for (int i = 0; i < postureS->getNumVariables(); ++i) {
     joints.push_back(postureS->getVariable(i)->getValue());
   }
-  std::list<position> *tmpContacts;
+  std::list<transf> *tmpContacts;
   tmpContacts = p->getContacts();
-  for (std::list<position>::iterator it = tmpContacts->begin(); it != tmpContacts->end(); ++it) {
-    contacts.push_back((*it).x());
-    contacts.push_back((*it).y());
-    contacts.push_back((*it).z());
+  for (std::list<transf>::iterator it = tmpContacts->begin(); it != tmpContacts->end(); ++it) {
+    contacts.push_back((*it).translation().x());
+    contacts.push_back((*it).translation().y());
+    contacts.push_back((*it).translation().z());
   }
   this->SetFinalgraspJoints(joints);
   this->SetFinalgraspPosition(pos);

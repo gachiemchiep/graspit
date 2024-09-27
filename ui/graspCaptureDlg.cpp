@@ -119,7 +119,7 @@ GraspCaptureDlg::captureButtonClicked()
   newState->setVolume(std::max(0.0, quality));
   newState->saveCurrentHandState();
   for (int i = 0; i < mCurrentHand->getGrasp()->getNumContacts(); i++) {
-    newState->getContacts()->push_back(mCurrentHand->getGrasp()->getContact(i)->getPosition());
+    newState->getContacts()->push_back(mCurrentHand->getGrasp()->getContact(i)->getContactFrame());
   }
   mGrasps.push_back(newState);
   updateNumGrasps();
@@ -140,19 +140,73 @@ GraspCaptureDlg::saveToFileButtonClicked()
     return;
   }
   QString fn(QFileDialog::getSaveFileName(this, QString(),
-                                          QString(getenv("GRASPIT")), "Text Files (*.txt)"));
+                                          QString(getenv("GRASPIT")), "Text Files (*.json)"));
   if (fn.isEmpty()) { return; }
-  if (fn.section('.', 1).isEmpty()) { fn.append(".txt"); }
-  FILE *fp = fopen(fn.toUtf8().constData(), "a");
+  if (fn.section('.', 1).isEmpty()) { fn.append(".json"); }
+
+  std::ofstream fp;
+  fp.open(fn.toUtf8().constData(), std::ios_base::app);
+
   if (!fp) {
     DBGA("Failed to open save file " << fn.toUtf8().constData());
     return;
-  }
+   }
+
+  // get grasp for each state
+  Json::Value grasps;
   std::list<GraspPlanningState *>::iterator it;
   for (it = mGrasps.begin(); it != mGrasps.end(); it++) {
-    (*it)->writeToFile(fp);
+    Json::Value grasp;
+
+    double grasp_energy = - 30 * (*it)->getEpsilonQuality() - 100 * (*it)->getVolume();
+    grasp["grasp_energy"] = grasp_energy;
+
+    std::list<transf> *contacts;
+    std::list<std::string> *contactNames;
+    contacts = (*it)->getContacts();
+    std::list<transf>::iterator itContact;
+
+    for (itContact = contacts->begin(); itContact != contacts->end(); ++itContact) {
+      Json::Value contact;
+      contact.append((*itContact).translation().x() / 1000.0);
+      contact.append((*itContact).translation().y() / 1000.0);
+      contact.append((*itContact).translation().z() / 1000.0);
+      contact.append((*itContact).rotation().w());
+      contact.append((*itContact).rotation().x());
+      contact.append((*itContact).rotation().y());
+      contact.append((*itContact).rotation().z());
+
+      grasp["contacts"].append(contact);
+    }
+
+    Json::Value pose;
+    // http://wiki.ros.org/household%20objects
+    //  [tx,ty,tz,qw,qx,qy,qz] 
+    for (int i = 0; i < (*it)->getPosition()->getNumVariables(); ++i) {
+      if (i < 3) {
+        // translation
+        pose.append((*it)->getPosition()->getVariable(i)->getValue() / 1000.0 );
+      } else {
+        // orientation
+        pose.append((*it)->getPosition()->getVariable(i)->getValue());
+      }
+    }
+    grasp["pose"] = pose;
+
+    Json::Value dofs;
+    for (int i = 0; i < (*it)->getPosture()->getNumVariables(); ++i) {
+      dofs.append((*it)->getPosture()->getVariable(i)->getValue());
+    }
+    grasp["dofs"] = dofs;
+    grasps["grasps"].append(grasp);
+
   }
-  fclose(fp);
+
+  Json::StyledWriter styledWriter;
+  fp << styledWriter.write(grasps);
+
+  fp.close();
+
   DBGA("Grasps saved.");
 }
 
@@ -204,14 +258,14 @@ GraspCaptureDlg::saveToDBaseButtonClicked()
     grasp->SetFinalgraspPosition(tempArray);
 
     //the contacts
-    std::list<position> *contacts;
+    std::list<transf> *contacts;
     tempArray.clear();
     contacts = (*it)->getContacts();
-    std::list<position>::iterator itContact;
+    std::list<transf>::iterator itContact;
     for (itContact = contacts->begin(); itContact != contacts->end(); ++itContact) {
-      tempArray.push_back((*itContact).x());
-      tempArray.push_back((*itContact).y());
-      tempArray.push_back((*itContact).z());
+      tempArray.push_back((*itContact).translation().x());
+      tempArray.push_back((*itContact).translation().y());
+      tempArray.push_back((*itContact).translation().z());
     }
     grasp->SetContacts(tempArray);
     //store this

@@ -373,7 +373,7 @@ class GraspPlanningState : public HandObjectState
     int mIndex;
 
     //! The list of contacts between hand and object in object coordinates
-    std::list<position> mContacts;
+    std::list<transf> mContacts;
 
   public:
     GraspPlanningState(Hand *hand) : HandObjectState(hand) {}
@@ -402,8 +402,8 @@ class GraspPlanningState : public HandObjectState
     double getEpsilonQuality() const {return mQualEpsilon;} void setEpsilonQuality(double q) {mQualEpsilon = q;}
     double getVolume() const {return mQualVolume;} void setVolume(double v) {mQualVolume = v;}
     int getIndex() const {return mIndex;} void setIndex(double i) {mIndex = i;}
-    std::list<position> *getContacts() {return &mContacts;}
-    const std::list<position> *getContacts() const {return &mContacts;}
+    std::list<transf> *getContacts() {return &mContacts;}
+    const std::list<transf> *getContacts() const {return &mContacts;}
 
     //! Compares two states by their saved "energy" information
     static bool compareStates(const GraspPlanningState *s1, const GraspPlanningState *s2);

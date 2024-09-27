@@ -73,6 +73,7 @@ find_package(SoQt REQUIRED)
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 find_package(Eigen3)
+find_package(jsoncpp REQUIRED)
 
 if (DYNAMICS_ENGINE STREQUAL BULLET_DYNAMICS)
 
@@ -827,7 +828,7 @@ set(GRASPIT_LINK_LIBRARIES
 
 ## Link the shared library and the executable
 target_link_libraries(graspit ${GRASPIT_LINK_LIBRARIES} Qt5::Widgets Qt5::Network Qt5::Sql)
-target_link_libraries(graspit_simulator graspit ${GRASPIT_LINK_LIBRARIES} Qt5::Widgets Qt5::Network Qt5::Sql)
+target_link_libraries(graspit_simulator graspit ${GRASPIT_LINK_LIBRARIES} Qt5::Widgets Qt5::Network Qt5::Sql jsoncpp_lib)
 
 ## Set install destination paths
 set ( INCLUDE_DESTINATION ${CMAKE_INSTALL_PREFIX}/include/)

@@ -26,6 +26,8 @@
 #ifndef _graspcapturedlg_h_
 #define _graspcapturedlg_h_
 
+#include <fstream>
+#include "jsoncpp/json/json.h"
 #include <QDialog>
 #include <list>
 
